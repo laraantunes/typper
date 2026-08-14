@@ -22,11 +22,11 @@ class Config
     protected $config;
     
     /**
-     * Stores all the editorial configuration
+     * Stores all the site configuration
      * 
      * @var Arrayy
      */
-    protected $editorial;
+    protected $site;
 
     /**
      * Config singleton instance
@@ -41,7 +41,7 @@ class Config
     public function __construct()
     {
         $this->config = new Arrayy(include('config/application_config.php'));
-        $this->editorial = new Arrayy(Yaml::parseFile('config/editorial.yml'));
+        $this->site = new Arrayy(Yaml::parseFile('config/site.yml'));
     }
 
     /**
@@ -65,7 +65,7 @@ class Config
      */
     public static function get(string $key)
     {
-        return self::singleton()->config->get($key) ?? self::singleton()->editorial->get($key) ?? null;
+        return self::singleton()->config->get($key) ?? self::singleton()->site->get($key) ?? null;
     } 
 }
 

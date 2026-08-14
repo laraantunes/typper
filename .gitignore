@@ -1,3 +1,8 @@
 .idea
 vendor
 cache/*
+content/*
+config/*
+themes/*
+public/*
+files/*

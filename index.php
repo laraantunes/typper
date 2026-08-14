@@ -1,6 +1,6 @@
 <?php
 /**
- * 2021 Typper
+ * Laralabs Typper
  */
 include_once "vendor/autoload.php";
 

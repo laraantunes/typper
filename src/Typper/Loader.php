@@ -1,6 +1,6 @@
 <?php
 /**
- * 2021 Typper
+ * Laralabs Typper
  */
 
 namespace Typper;
@@ -50,7 +50,6 @@ class Loader
         $data = $item->get();
         // If the item is not stored on cache, loads the data
         if($item->isMiss()){
-            var_dump('cache empty');
             $item->lock();
             $data = Content::fromPath($path);
             // Stores at cache the returned data

@@ -1,6 +1,6 @@
 <?php
 /**
- * 2021 Typper
+ * Laralabs Typper
  * This file contains the application configuration. Change it's values to change the 
  * default behaviour
  */
@@ -16,16 +16,8 @@ return [
         ],
     ],
     // Sets the configuration of the parser system
-    // You may want to check Kurenai's documentation for more information about parsers:
-    // https://github.com/daylerees/kurenai
     'parser' => [
-        // Defines the parser for metadata block of the contents (articles and pages)
-        // Typper default parser for metadata is YamlParser, using symfony/yaml as the parser.
-        // If you want to use another parser, you may want to include it on composer.json.
-        // JsonParser also can be used without including any package
-        'metadataParser' => \Kurenai\Parsers\Metadata\YamlParser::class,
         // Defines the parser for the content block of the contents (articles and pages)
-        // as the parser. If you want to use another parser, you may want to include it on composer.json
         // Typper default parser for content is ParseDownExtraParser, a custom parser based on
         // erusev/parsedown-extra
         'contentParser' => \Typper\Parsers\Content\ParseDownExtraParser::class,

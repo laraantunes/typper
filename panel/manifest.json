@@ -1,0 +1,17 @@
+{
+  "name": "Typper",
+  "short_name": "Typper",
+  "start_url": "index.php",
+  "display": "standalone",
+  "background_color": "#0f0c29",
+  "theme_color": "#0f0c29",
+  "description": "Typper Admin Panel",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

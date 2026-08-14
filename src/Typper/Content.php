@@ -1,14 +1,14 @@
 <?php
 /**
- * 2021 Typper
+ * Laralabs Typper
  */
 
 namespace Typper;
 
 use Arrayy\Arrayy;
-use Kurenai\Parser;
 use Typper\Skeleton\ContentInterface;
-use Kurenai\Parsers\Content\MarkdownParser;
+use Typper\Parsers\Parser;
+use Typper\Parsers\Content\ParseDownExtraParser;
 
 /**
  * The Content Class
@@ -53,7 +53,7 @@ class Content implements ContentInterface
     public $content = '';
 
     /**
-     * The content's author (when different from defined on editorial.yml)
+     * The content's author (when different from defined on site.yml)
      *
      * @var string
      */
@@ -157,6 +157,7 @@ class Content implements ContentInterface
         $content->filePath = $array['filePath'];
         $content->title = $array['title'] ?? '';
         $content->subtitle = $array['subtitle'] ?? '';
+        $content->content = $array['content'] ?? '';
         $content->author = $array['author'] ?? config('author');
         if (!empty($array['published'])) {
             $content->published = $array['published'];
@@ -207,10 +208,8 @@ class Content implements ContentInterface
      */
     protected static function parser()
     {
-        $metadataParser = config('parser.metadataParser');
-        $contentParser = config('parser.contentParser');
+        $contentParser = config('parser.contentParser', \Typper\Parsers\Content\ParseDownExtraParser::class);
         return new Parser(
-            new $metadataParser,
             new $contentParser
         );
     }

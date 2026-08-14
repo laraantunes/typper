@@ -3,15 +3,14 @@
     "description": "A minimalistic cli and markdown-based cms",
     "type": "project",
     "require": {
-        "daylerees/kurenai": "^2.1",
-        "tedivm/stash": "^0.15.2",
-        "cocur/slugify": "^3.2",
-        "splitbrain/php-cli": "^1.1",
-        "twig/twig": "^3.11",
-        "symfony/yaml": "^5.0@dev",
-        "voku/arrayy": "dev-master",
-        "erusev/parsedown-extra": "dev-master",
-        "nette/finder": "^3.0@dev"
+        "tedivm/stash": "^1.2",
+        "cocur/slugify": "^4.3",
+        "splitbrain/php-cli": "^1.2",
+        "twig/twig": "^3.14",
+        "symfony/yaml": "^7.0",
+        "voku/arrayy": "^7.0",
+        "erusev/parsedown-extra": "0.9.0",
+        "nette/finder": "^3.0"
     },
     "require-dev": {
         "psy/psysh": "@stable"
@@ -26,7 +25,7 @@
     "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
-            "Typper\\": "src/Typper"
+            "Typper\\": "src/Typper\\"
         },
         "files": [
             "src/Typper/Helpers/typper_helper.php"
