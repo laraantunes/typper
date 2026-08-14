@@ -3,6 +3,8 @@ vendor
 cache/*
 contents/*
 config/*
+!config/application_config.php
 themes/*
+!themes/default/
 public/*
 files/*
