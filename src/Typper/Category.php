@@ -108,11 +108,12 @@ class Category implements CategoryInterface
      */
     public static function fromSlug(string $slug, bool $forceReload = false): CategoryInterface
     {
-        return array_filter(self::getCategories($forceReload), function ($item) use ($slug) {
+        $filtered = array_filter(self::getCategories($forceReload), function ($item) use ($slug) {
             if (trim($item->slug, '/') == trim($slug, '/')) {
                 return $item;
             }
-        })[0] ?? self::notFoundCategory();
+        });
+        return array_values($filtered)[0] ?? self::notFoundCategory();
     }
 
     /**
