@@ -85,6 +85,11 @@ class Category implements CategoryInterface
                 $contents[] = $content;
             }
         }
+        usort($contents, function($a, $b) {
+            $dateA = strtotime($a->publicationDate ?? $a->creationDate);
+            $dateB = strtotime($b->publicationDate ?? $b->creationDate);
+            return $dateB <=> $dateA;
+        });
         return $contents;
     }
 

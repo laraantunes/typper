@@ -205,12 +205,18 @@ function get_uncategorized_contents(): array
             $content = \Typper\Content::fromFilePath($file);
             // Ignore the 'home.md' if it exists, since it's the home page itself
             if ($content->slug === 'home') continue;
-            
             if ($content->published || $isLoggedIn) {
                 $contents[] = $content;
             }
         }
     }
+    
+    usort($contents, function($a, $b) {
+        $dateA = strtotime($a->publicationDate ?? $a->creationDate);
+        $dateB = strtotime($b->publicationDate ?? $b->creationDate);
+        return $dateB <=> $dateA;
+    });
+    
     return $contents;
 }
 
@@ -255,5 +261,12 @@ function get_contents_by_tag(string $tag): array
             }
         }
     }
+    
+    usort($contents, function($a, $b) {
+        $dateA = strtotime($a->publicationDate ?? $a->creationDate);
+        $dateB = strtotime($b->publicationDate ?? $b->creationDate);
+        return $dateB <=> $dateA;
+    });
+    
     return $contents;
 }
