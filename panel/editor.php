@@ -54,9 +54,10 @@ if ($slug) {
     }
 }
 
+$full_slug = $category ? $category . '/' . $slug : $slug;
 $images = [];
-if ($slug) {
-    $files_dir = __DIR__ . '/../files/' . $slug;
+if ($full_slug) {
+    $files_dir = __DIR__ . '/../files/' . $full_slug;
     if (is_dir($files_dir)) {
         $files = scandir($files_dir);
         foreach ($files as $f) {
@@ -184,9 +185,9 @@ if ($base_url === '\\' || $base_url === '/') {
                     <p id="no-media-msg" style="color: var(--color-text-muted); grid-column: 1 / -1; <?= empty($images) ? '' : 'display: none;' ?>">Nenhuma imagem enviada ainda.</p>
                     
                     <?php foreach ($images as $img): ?>
-                        <div class="media-card" id="media-<?= htmlspecialchars(md5($img)) ?>" style="position: relative; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--color-glass-border); background: #000;">
-                            <img src="<?= htmlspecialchars($base_url) ?>/files/<?= htmlspecialchars($slug) ?>/<?= htmlspecialchars($img) ?>" style="width: 100%; height: 150px; object-fit: contain; display: block;" alt="<?= htmlspecialchars($img) ?>">
-                            <button type="button" class="btn btn-primary btn-icon" onclick="insertImageToEditor('<?= htmlspecialchars($base_url) ?>/files/<?= htmlspecialchars($slug) ?>/<?= htmlspecialchars($img) ?>', '<?= htmlspecialchars($img) ?>')" style="position: absolute; top: 0.5rem; left: 0.5rem; padding: 0.4rem; background: rgba(138, 43, 226, 0.9); border: none;" title="Inserir no Editor">
+                        <div class="media-card" id="media-<?= md5($img) ?>" style="position: relative; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--color-glass-border); background: #000;">
+                            <img src="<?= htmlspecialchars($base_url) ?>/files/<?= htmlspecialchars($full_slug) ?>/<?= htmlspecialchars($img) ?>" style="width: 100%; height: 150px; object-fit: contain; display: block;" alt="<?= htmlspecialchars($img) ?>">
+                            <button type="button" class="btn btn-primary btn-icon" onclick="insertImageToEditor('<?= htmlspecialchars($base_url) ?>/files/<?= htmlspecialchars($full_slug) ?>/<?= htmlspecialchars($img) ?>', '<?= htmlspecialchars($img) ?>')" style="position: absolute; top: 0.5rem; left: 0.5rem; padding: 0.4rem; background: rgba(138, 43, 226, 0.9); border: none;" title="Inserir no Editor">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                     <polyline points="14 2 14 8 20 8"></polyline>
@@ -275,7 +276,10 @@ if ($base_url === '\\' || $base_url === '/') {
             plugins: [[codeSyntaxHighlight, { highlighter: Prism }], colorSyntax, videoPlugin],
             hooks: {
                 addImageBlobHook: async (blob, callback) => {
-                    const slug = document.getElementById('slug').value.trim() || 'temp';
+                    let slug = document.getElementById('slug').value.trim() || 'temp';
+                    const cat = document.getElementById('category').value;
+                    if (cat) slug = cat + '/' + slug;
+                    
                     const formData = new FormData();
                     formData.append('image', blob);
                     formData.append('slug', slug);
@@ -343,8 +347,11 @@ if ($base_url === '\\' || $base_url === '/') {
         async function deleteImage(imageName, cardId) {
             if (!confirm('Tem certeza que deseja excluir esta imagem? Se ela estiver sendo usada no conteúdo, ficará quebrada.')) return;
             
-            const slug = document.getElementById('slug').value.trim();
+            let slug = document.getElementById('slug').value.trim();
             if (!slug) return;
+            
+            const cat = document.getElementById('category').value;
+            if (cat) slug = cat + '/' + slug;
             
             try {
                 const formData = new URLSearchParams();

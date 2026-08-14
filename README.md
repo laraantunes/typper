@@ -1,4 +1,7 @@
+
 # Typper CMS
+
+![Typper CMS](icon.png)
 
 Typper é um CMS (Content Management System) minimalista baseado em arquivos Markdown, possuindo um painel web e comandos CLI para a criação dos conteúdos. Desenvolvido para ser rápido, leve e sem dependência de bancos de dados tradicionais, todo o conteúdo é gerenciado através de arquivos `.md` e as configurações através de `.yml`.
 
@@ -45,6 +48,7 @@ Além do painel, o Typper inclui um script de linha de comando. Você pode utili
 - `php typper.php make:category [slug] --title="Nome" --desc="Descrição"` - Cria uma nova categoria.
 - `php typper.php edit:category [slug] --title="Novo Nome"` - Edita uma categoria existente.
 - `php typper.php list:categories` - Lista as categorias existentes.
+- `php typper.php update` - Atualiza o Typper automaticamente via GitHub.
 - `php typper.php --clear` (ou `-c`) - Limpa todo o cache do sistema.
 - `php typper.php delete [file]` - Deleta o cache de um arquivo específico.
 
@@ -106,7 +110,7 @@ Contribuições são bem-vindas! Sinta-se à vontade para enviar um Pull Request
 
 ## 📝 Licença
 
-Este projeto está sob licença MIT.
+Este projeto está sob licença GPL03.0.
 
 ## 🎯 Sobre a Autora
 

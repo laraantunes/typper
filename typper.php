@@ -46,6 +46,8 @@ class Typper extends CLI
         $options->registerOption('desc', 'Category description', 'd', 'description', 'edit:category');
 
         $options->registerCommand('list:categories', 'List all categories');
+        
+        $options->registerCommand('update', 'Update Typper to the latest version via GitHub');
     }
 
     protected function main(Options $options)
@@ -234,6 +236,17 @@ class Typper extends CLI
             foreach ($data as $slug => $cat) {
                 $title = $cat['title'] ?? 'No Title';
                 echo "- {$slug} ({$title})\n";
+            }
+            exit;
+        }
+        
+        if ($options->getCmd() === 'update') {
+            echo "Checking for updates...\n";
+            $result = \Typper\Updater::update();
+            if ($result['success']) {
+                echo $result['message'] . "\n";
+            } else {
+                echo "Error: " . $result['message'] . "\n";
             }
             exit;
         }

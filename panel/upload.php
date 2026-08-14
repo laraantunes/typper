@@ -7,7 +7,8 @@ if (empty($_SESSION['typper_logged_in'])) {
 header('Content-Type: application/json');
 
 $slug = $_POST['slug'] ?? 'temp';
-$slug = preg_replace('/[^a-z0-9\-]/', '', $slug);
+$slug = preg_replace('/[^a-z0-9\-\/]/', '', $slug);
+$slug = trim(preg_replace('/\/+/', '/', $slug), '/');
 if (empty($slug)) {
     $slug = 'temp';
 }

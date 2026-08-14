@@ -10,7 +10,8 @@ $slug = $_POST['slug'] ?? '';
 $image = $_POST['image'] ?? '';
 
 // Sanitize inputs
-$slug = preg_replace('/[^a-z0-9\-]/', '', $slug);
+$slug = preg_replace('/[^a-z0-9\-\/]/', '', $slug);
+$slug = trim(preg_replace('/\/+/', '/', $slug), '/');
 $image = basename($image); // Prevent directory traversal
 
 if (empty($slug) || empty($image)) {
