@@ -100,11 +100,16 @@ if (file_put_contents($new_file_path, $content) === false) {
     exit;
 }
 
-// Limpar cache do Typper via CLI (opcional/preventivo)
-$typper_path = __DIR__ . '/../typper.php';
-if (file_exists($typper_path)) {
-    // Clear all cache just to be safe
-    @exec("php " . escapeshellarg($typper_path) . " clear");
+// Limpar cache diretamente via código
+require_once __DIR__ . '/../vendor/autoload.php';
+try {
+    $old_cwd = getcwd();
+    chdir(__DIR__ . '/../');
+    $loader = new \Typper\Loader();
+    $loader->clear();
+    chdir($old_cwd);
+} catch (\Exception | \Throwable $e) {
+    // Ignora erro de cache
 }
 
 echo json_encode(['success' => true]);

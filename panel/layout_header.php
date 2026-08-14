@@ -24,6 +24,15 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <?php elseif ($current_page === 'categories.php'): ?>
             <button onclick="document.getElementById('modal-categoria').classList.add('active')" class="btn btn-primary">Nova Categoria</button>
         <?php elseif ($current_page === 'editor.php'): ?>
+            <?php if (!empty($_GET['slug'])): ?>
+                <a href="<?= $base_url ?>/<?= htmlspecialchars($_GET['slug']) ?>" target="_blank" class="btn btn-secondary" title="Abrir em nova guia">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    Visualizar
+                </a>
+            <?php endif; ?>
             <a href="index.php" class="btn btn-secondary">Cancelar</a>
             <button type="button" class="btn btn-primary" id="btn-save">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

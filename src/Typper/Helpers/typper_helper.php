@@ -182,3 +182,78 @@ function auto_seo(?\Typper\Skeleton\ContentInterface $content = null)
         }
     }
 }
+
+/**
+ * Gets all uncategorized contents (root level posts)
+ *
+ * @return \Typper\Content[]
+ */
+function get_uncategorized_contents(): array
+{
+    $contents = [];
+    $path = config('app.contentsPath');
+    if (!is_dir($path)) return $contents;
+    
+    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+        session_start();
+    }
+    $isLoggedIn = !empty($_SESSION['typper_logged_in']);
+    
+    $files = glob(rtrim($path, '/\\') . '/*.md');
+    if ($files) {
+        foreach ($files as $file) {
+            $content = \Typper\Content::fromFilePath($file);
+            // Ignore the 'home.md' if it exists, since it's the home page itself
+            if ($content->slug === 'home') continue;
+            
+            if ($content->published || $isLoggedIn) {
+                $contents[] = $content;
+            }
+        }
+    }
+    return $contents;
+}
+
+/**
+ * Gets all contents by a specific tag
+ *
+ * @param string $tag
+ * @return \Typper\Content[]
+ */
+function get_contents_by_tag(string $tag): array
+{
+    $contents = [];
+    $path = config('app.contentsPath');
+    if (!is_dir($path)) return $contents;
+    
+    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+        session_start();
+    }
+    $isLoggedIn = !empty($_SESSION['typper_logged_in']);
+    
+    $tagLower = mb_strtolower(trim($tag));
+    
+    $dir = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS));
+    foreach ($dir as $fileinfo) {
+        if ($fileinfo->isFile() && $fileinfo->getExtension() === 'md') {
+            $content = \Typper\Content::fromFilePath($fileinfo->getPathname());
+            
+            if ($content->published || $isLoggedIn) {
+                $contentTags = [];
+                if (is_array($content->tags)) {
+                    $contentTags = $content->tags;
+                } else if (is_string($content->tags)) {
+                    $contentTags = explode(',', $content->tags);
+                }
+                
+                foreach ($contentTags as $t) {
+                    if (mb_strtolower(trim($t)) === $tagLower) {
+                        $contents[] = $content;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    return $contents;
+}

@@ -12,7 +12,7 @@ return [
         // Defines the cache options for Stash driver
         'options' => [
             // Path for cache folder for articles and pages when using FileSystem as cache driver
-            'path' => 'cache',
+            'path' => __DIR__ . '/../cache',
         ],
     ],
     // Sets the configuration of the parser system

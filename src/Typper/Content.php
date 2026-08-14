@@ -197,7 +197,19 @@ class Content implements ContentInterface
      */
     public static function fromFilePath(string $path): ContentInterface
     {
-        $path = str_replace('.md', '', $path);
+        // Obter caminho absoluto do diretório de conteúdos
+        $contentsPath = realpath(config('app.contentsPath'));
+        $absPath = realpath($path) ?: $path;
+        
+        if ($contentsPath && strpos($absPath, $contentsPath) === 0) {
+            $relativePath = substr($absPath, strlen($contentsPath));
+            $slug = ltrim(str_replace('.md', '', $relativePath), '/\\');
+            $slug = str_replace('\\', '/', $slug);
+            return self::fromPath($slug);
+        }
+        
+        // Fallback caso falhe
+        $path = str_replace('.md', '', ltrim(str_replace('\\', '/', $path), '/'));
         return self::fromPath($path);
     }
 

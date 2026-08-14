@@ -1,6 +1,6 @@
 {
     "name": "laraantunes/typper",
-    "description": "A minimalistic cli and markdown-based cms",
+    "description": "A minimalistic markdown-based cms",
     "type": "project",
     "require": {
         "tedivm/stash": "^1.2",

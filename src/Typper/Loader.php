@@ -65,12 +65,7 @@ class Loader
 
     public function clear()
     {
-        //$this->cachePool->clear();
-        $cacheFolder = config('cache.options.path');
-        $files = glob($cacheFolder);
-        foreach($files as $file){
-            unlink($file);
-        }
+        $this->cachePool->clear();
     }
 
     public function deleteCache(string $file)

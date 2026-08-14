@@ -72,8 +72,18 @@ class Category implements CategoryInterface
     {
         $contents = [];
         $path = config('app.contentsPath').DIRECTORY_SEPARATOR.$this->slug;
+        if (!is_dir($path)) return $contents;
+        
+        if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+            session_start();
+        }
+        $isLoggedIn = !empty($_SESSION['typper_logged_in']);
+        
         foreach (Finder::findFiles('*.md')->in($path) as $key => $file) {
-            $contents[] = Content::fromFilePath($file);
+            $content = Content::fromFilePath($file);
+            if ($content->published || $isLoggedIn) {
+                $contents[] = $content;
+            }
         }
         return $contents;
     }

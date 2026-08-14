@@ -6,9 +6,10 @@ if (empty($_SESSION['typper_logged_in'])) {
     exit;
 }
 
-$contents_dir = __DIR__ . '/../contents';
-if (!is_dir($contents_dir)) {
-    @mkdir($contents_dir, 0755, true);
+$contents_dir = realpath(__DIR__ . '/../contents');
+if (!$contents_dir) {
+    @mkdir(__DIR__ . '/../contents', 0755, true);
+    $contents_dir = realpath(__DIR__ . '/../contents');
 }
 
 // Lógica de exclusão

@@ -53,18 +53,48 @@ class ThemeManager implements ThemeManagerInterface
      */
     public function fromPath(string $path)
     {
-        $this->showHomeIfPossible($path);
-        $content = $this->getContentFromPath($path);
-        // If the content was not found, try to get it as a category or returns a not found
-        if ($content->notFound) {
-            $category = Category::fromSlug($path);
-            if (!$category->notFound) {
-                $this->showCategoryTemplate($category);
-            } else {
-                $this->showNotFoundTemplate();
+        $cleanPath = trim($path, '/');
+        
+        // Add support for tags
+        if (strpos($cleanPath, 'tag/') === 0) {
+            $tagParts = explode('/', $cleanPath);
+            $tag = $tagParts[1] ?? '';
+            if ($tag !== '') {
+                $this->showTagTemplate(urldecode($tag));
+            }
+            return;
+        }
+        
+        $lookupPath = in_array($cleanPath, ['', 'home']) ? 'home' : $cleanPath;
+        
+        $content = $this->getContentFromPath($lookupPath);
+        
+        // Bloqueia a visualização de conteúdos não publicados se não estiver logado
+        if (!$content->notFound && !$content->published) {
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            if (empty($_SESSION['typper_logged_in'])) {
+                $content->notFound = true;
             }
         }
-        $this->showContentTemplate($content);
+
+        if (!$content->notFound) {
+            $this->showContentTemplate($content);
+            return;
+        }
+
+        if (in_array($cleanPath, ['', 'home'])) {
+            $this->showHomeIfPossible($cleanPath);
+        }
+
+        // If the content was not found, try to get it as a category or returns a not found
+        $category = Category::fromSlug($cleanPath);
+        if (!$category->notFound) {
+            $this->showCategoryTemplate($category);
+        } else {
+            $this->showNotFoundTemplate();
+        }
     }
 
     /**
@@ -110,9 +140,25 @@ class ThemeManager implements ThemeManagerInterface
      */
     protected function showCategoryTemplate(Category $category)
     {
-        $this->includeTemplatePart('header');
+        $this->includeTemplatePart('header', ['category' => $category]);
         $this->includeTemplatePart('category', ['category' => $category]);
-        $this->includeTemplatePart('footer');
+        $this->includeTemplatePart('footer', ['category' => $category]);
+        exit;
+    }
+
+    /**
+     * Shows the tag template
+     * @param string $tag
+     */
+    protected function showTagTemplate(string $tag)
+    {
+        // Se não houver arquivo tag.php no tema, tenta usar o category.php como fallback (ou dá not found)
+        if (!file_exists("{$this->themesPath}/{$this->activeTheme}/tag.php")) {
+            $this->showNotFoundTemplate();
+        }
+        $this->includeTemplatePart('header', ['tag' => $tag]);
+        $this->includeTemplatePart('tag', ['tag' => $tag]);
+        $this->includeTemplatePart('footer', ['tag' => $tag]);
         exit;
     }
 
@@ -121,9 +167,9 @@ class ThemeManager implements ThemeManagerInterface
      */
     protected function showContentTemplate(Content $content)
     {
-        $this->includeTemplatePart('header');
+        $this->includeTemplatePart('header', ['content' => $content]);
         $this->includeTemplatePart('content', ['content' => $content]);
-        $this->includeTemplatePart('footer');
+        $this->includeTemplatePart('footer', ['content' => $content]);
         exit;
     }
 
@@ -132,7 +178,9 @@ class ThemeManager implements ThemeManagerInterface
      */
     protected function showNotFoundTemplate()
     {
+        $this->includeTemplatePart('header');
         $this->includeTemplatePart('not_found');
+        $this->includeTemplatePart('footer');
         exit;
     }
 }

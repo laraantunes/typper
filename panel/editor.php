@@ -223,6 +223,37 @@ if ($base_url === '\\' || $base_url === '/') {
     <script src="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.min.js"></script>
     <script src="https://uicdn.toast.com/editor-plugin-color-syntax/latest/toastui-editor-plugin-color-syntax.min.js"></script>
     
+    <!-- Video Plugin JS (Custom v3 Implementation) -->
+    <script>
+        function videoPlugin() {
+            const createVideoNode = (url, isVideoTag = false) => {
+                return function(node) {
+                    const source = node.literal.trim();
+                    const content = isVideoTag 
+                        ? `<video width="640" controls src="${source}" style="max-width: 100%;"></video>`
+                        : `<iframe width="640" height="450" src="${url}${source}" frameborder="0" allowfullscreen style="max-width: 100%;"></iframe>`;
+                    
+                    return [
+                        { type: 'openTag', tagName: 'div', style: 'text-align: center; margin: 1rem 0;' },
+                        { type: 'html', content: content },
+                        { type: 'closeTag', tagName: 'div' }
+                    ];
+                }
+            };
+
+            return {
+                toHTMLRenderers: {
+                    youtube: createVideoNode('https://www.youtube.com/embed/'),
+                    vimeo: createVideoNode('https://player.vimeo.com/video/'),
+                    youku: createVideoNode('http://player.youku.com/embed/'),
+                    bilibili: createVideoNode('http://player.bilibili.com/player.html?aid='),
+                    qq: createVideoNode('https://v.qq.com/txp/iframe/player.html?vid='),
+                    mp4: createVideoNode('', true)
+                }
+            };
+        }
+    </script>
+    
     <!-- Idioma pt-BR para o TUI Editor -->
     <script src="https://uicdn.toast.com/editor/latest/i18n/pt-br.min.js"></script>
 
@@ -241,7 +272,7 @@ if ($base_url === '\\' || $base_url === '/') {
             initialValue: initialMarkdown,
             theme: 'dark',
             language: 'pt-BR',
-            plugins: [[codeSyntaxHighlight, { highlighter: Prism }], colorSyntax],
+            plugins: [[codeSyntaxHighlight, { highlighter: Prism }], colorSyntax, videoPlugin],
             hooks: {
                 addImageBlobHook: async (blob, callback) => {
                     const slug = document.getElementById('slug').value.trim() || 'temp';

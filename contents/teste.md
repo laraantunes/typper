@@ -1,8 +1,8 @@
 title: Teste
 type: post
-published: false
+published: true
 ===
-# Teste
+# Batatinha 2
 
 Teste de artigo
 
