@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  typper:
+    build: .
+    container_name: typper_app
+    ports:
+      - "8088:80"
+    volumes:
+      # Montar a pasta atual inteira no container para refletir o código raiz
+      - ./:/var/www/html
+      
+      # Montar e persistir pastas cruciais de conteúdo e configuração
+      - ./contents:/var/www/html/contents
+      - ./config:/var/www/html/config
+      - ./themes:/var/www/html/themes
+      - ./files:/var/www/html/files
+      - ./cache:/var/www/html/cache
+      - ./panel/data:/var/www/html/panel/data
+    restart: unless-stopped
