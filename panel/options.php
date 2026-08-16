@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/session.php';
+require_once __DIR__ . '/../about.php';
 if (empty($_SESSION['typper_logged_in'])) {
     header("Location: login.php");
     exit;
@@ -27,9 +28,14 @@ if (empty($_SESSION['typper_logged_in'])) {
                 <!-- Sobre o Typper -->
                 <div class="glass-panel" style="padding: 2rem; text-align: center;">
                     <img src="icon.svg" alt="Typper Logo" style="width: 80px; height: 80px; margin-bottom: 1rem;">
-                    <h3 style="margin-top: 0; margin-bottom: 0.5rem; color: var(--color-cyan);">Typper CMS</h3>
+                    <h3 style="margin-top: 0; margin-bottom: 0.5rem; color: var(--color-cyan);">Typper</h3>
                     <p style="color: var(--color-text-muted); margin-bottom: 1.5rem;">Um CMS minimalista baseado em Markdown.</p>
-                    
+                    <p style="color: var(--color-text-muted); margin-bottom: 0.5rem;"><?=$version?></p>
+                    <p style="color: var(--color-text-muted); margin-bottom: 1.5rem;">
+                        <a href="https://github.com/laraantunes/typper" target="_blank" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                            github.com/laraantunes/typper
+                        </a>
+                    </p>
                     <a href="https://laralabs.dev" target="_blank" class="btn btn-secondary" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;">
                         <img src="laralabs-icon.png" style="border:none;width:16px;height:16px"/>
                         Laralabs

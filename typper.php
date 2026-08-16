@@ -2,6 +2,7 @@
 <?php
 
 include_once "vendor/autoload.php";
+include_once "about.php";
 
 use splitbrain\phpcli\CLI;
 use splitbrain\phpcli\Options;
@@ -48,6 +49,7 @@ class Typper extends CLI
         $options->registerCommand('list:categories', 'List all categories');
         
         $options->registerCommand('update', 'Update Typper to the latest version via GitHub');
+        $options->registerCommand('version', 'Show Typper version');
     }
 
     protected function main(Options $options)
@@ -248,6 +250,12 @@ class Typper extends CLI
             } else {
                 echo "Error: " . $result['message'] . "\n";
             }
+            exit;
+        }
+
+        if ($options->getCmd() === 'version') {
+            global $version;
+            echo "Typper {$version}\n";
             exit;
         }
 
