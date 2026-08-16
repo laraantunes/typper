@@ -11,6 +11,7 @@ if (!$contents_dir) {
     @mkdir(__DIR__ . '/../contents', 0755, true);
     $contents_dir = realpath(__DIR__ . '/../contents');
 }
+$files_dir = realpath(__DIR__ . '/../files');
 
 // Lógica de exclusão
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete') {
@@ -35,6 +36,8 @@ $search_query = mb_strtolower(trim($_GET['q'] ?? ''));
 $filter_category = trim($_GET['category'] ?? '');
 $filter_tag = trim($_GET['tag'] ?? '');
 $filter_published = $_GET['published'] ?? '';
+$filter_type = trim($_GET['type'] ?? '');
+$filter_media = $_GET['media'] ?? '';
 
 // Ler os arquivos markdown recursivamente
 $all_files = [];
@@ -87,6 +90,17 @@ foreach ($dir as $fileinfo) {
             $markdown = strtolower(trim($content));
         }
         
+        $has_media = false;
+        if ($files_dir) {
+            $slug_dir = $files_dir . '/' . $fullSlug;
+            if (is_dir($slug_dir)) {
+                $media_files = array_diff(scandir($slug_dir), ['.', '..']);
+                if (count($media_files) > 0) {
+                    $has_media = true;
+                }
+            }
+        }
+        
         $all_files[] = [
             'slug' => $fullSlug,
             'category' => $category,
@@ -96,7 +110,8 @@ foreach ($dir as $fileinfo) {
             'published' => $published,
             'modified' => $fileinfo->getMTime(),
             'tags' => $tags,
-            'markdown' => $markdown
+            'markdown' => $markdown,
+            'has_media' => $has_media
         ];
     }
 }
@@ -115,9 +130,20 @@ foreach ($all_files as $file) {
     if ($filter_tag && !in_array($filter_tag, $file['tags'])) {
         continue;
     }
+    if ($filter_type !== '') {
+        if (strtolower($file['type']) !== strtolower($filter_type)) {
+            continue;
+        }
+    }
     if ($filter_published !== '') {
         $is_pub = $filter_published === '1';
         if ($file['published'] !== $is_pub) {
+            continue;
+        }
+    }
+    if ($filter_media !== '') {
+        $is_media = $filter_media === '1';
+        if ($file['has_media'] !== $is_media) {
             continue;
         }
     }
@@ -189,6 +215,22 @@ usort($files, function($a, $b) {
                     </select>
                 </div>
                 <div class="form-group" style="width: 150px; margin-bottom: 0;">
+                    <label class="form-label">Tipo</label>
+                    <select name="type" class="form-control">
+                        <option value="">Todos</option>
+                        <option value="post" <?= $filter_type === 'post' ? 'selected' : '' ?>>Post</option>
+                        <option value="page" <?= $filter_type === 'page' ? 'selected' : '' ?>>Page</option>
+                    </select>
+                </div>
+                <div class="form-group" style="width: 150px; margin-bottom: 0;">
+                    <label class="form-label">Possui Mídia</label>
+                    <select name="media" class="form-control">
+                        <option value="">Todos</option>
+                        <option value="1" <?= $filter_media === '1' ? 'selected' : '' ?>>Sim</option>
+                        <option value="0" <?= $filter_media === '0' ? 'selected' : '' ?>>Não</option>
+                    </select>
+                </div>
+                <div class="form-group" style="width: 150px; margin-bottom: 0;">
                     <label class="form-label">Publicado</label>
                     <select name="published" class="form-control">
                         <option value="">Todos</option>
@@ -198,7 +240,7 @@ usort($files, function($a, $b) {
                 </div>
                 <div style="margin-bottom: 0;">
                     <button type="submit" class="btn btn-primary">Filtrar</button>
-                    <?php if ($search_query || $filter_category || $filter_tag || $filter_published !== ''): ?>
+                    <?php if ($search_query || $filter_category || $filter_tag || $filter_type !== '' || $filter_media !== '' || $filter_published !== ''): ?>
                         <a href="index.php" class="btn btn-secondary">Limpar</a>
                     <?php endif; ?>
                 </div>

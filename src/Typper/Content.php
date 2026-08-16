@@ -67,6 +67,13 @@ class Content implements ContentInterface
     public $category;
 
     /**
+     * The parent content (if this content is inside a category)
+     *
+     * @var ContentInterface|null
+     */
+    public $parent = null;
+
+    /**
      * Defines if the content is published or not. Default true
      *
      * @var boolean
@@ -209,6 +216,14 @@ class Content implements ContentInterface
             }
         }
         $content->category = Category::fromSlug(getCategoryFromSlug($content->slug));
+
+        $categorySlug = getCategoryFromSlug($content->slug);
+        if (!empty($categorySlug)) {
+            $parentContent = self::fromPath($categorySlug);
+            if (!$parentContent->notFound) {
+                $content->parent = $parentContent;
+            }
+        }
 
         return $content;
     }
