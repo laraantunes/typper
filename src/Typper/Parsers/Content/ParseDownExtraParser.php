@@ -39,7 +39,7 @@ class TypperParsedown extends ParsedownExtra
                         $absolutePath = realpath($siteRoot . $localRelPath);
                         
                         if ($absolutePath && file_exists($absolutePath)) {
-                            $cacheDir = $siteRoot . '/cache/images';
+                            $cacheDir = $siteRoot . '/media-cache';
                             if (!is_dir($cacheDir)) {
                                 @mkdir($cacheDir, 0755, true);
                             }
@@ -60,7 +60,7 @@ class TypperParsedown extends ParsedownExtra
                             
                             if (file_exists($cachePath)) {
                                 $newUrlBase = substr($path, 0, $pos);
-                                $image['element']['attributes']['src'] = $newUrlBase . '/cache/images/' . $cacheFilename;
+                                $image['element']['attributes']['src'] = $newUrlBase . '/media-cache/' . $cacheFilename;
                                 $image['element']['attributes']['width'] = $width;
                             }
                         }
