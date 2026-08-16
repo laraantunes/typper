@@ -40,8 +40,9 @@ class Config
      */
     public function __construct()
     {
-        $this->config = new Arrayy(include('config/application_config.php'));
-        $this->site = new Arrayy(Yaml::parseFile('config/site.yml'));
+        $baseDir = __DIR__ . '/../../';
+        $this->config = new Arrayy(include($baseDir . 'config/application_config.php'));
+        $this->site = new Arrayy(Yaml::parseFile($baseDir . 'config/site.yml'));
     }
 
     /**
