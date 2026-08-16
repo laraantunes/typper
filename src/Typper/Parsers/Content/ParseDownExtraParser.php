@@ -35,10 +35,11 @@ class TypperParsedown extends ParsedownExtra
                     
                     if (($pos = strpos($path, '/files/')) !== false && extension_loaded('gd')) {
                         $localRelPath = substr($path, $pos);
-                        $absolutePath = realpath(__DIR__ . '/../../../../' . ltrim($localRelPath, '/'));
+                        $siteRoot = dirname($_SERVER['SCRIPT_FILENAME']);
+                        $absolutePath = realpath($siteRoot . $localRelPath);
                         
                         if ($absolutePath && file_exists($absolutePath)) {
-                            $cacheDir = __DIR__ . '/../../../../cache/images';
+                            $cacheDir = $siteRoot . '/cache/images';
                             if (!is_dir($cacheDir)) {
                                 @mkdir($cacheDir, 0755, true);
                             }
