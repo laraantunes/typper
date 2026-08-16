@@ -183,6 +183,30 @@ class Content implements ContentInterface
         }
         if (!empty($array['meta'])) {
             $content->meta = new Arrayy($array['meta']);
+        } else {
+            $content->meta = new Arrayy([]);
+        }
+
+        if (!empty($content->content)) {
+            if (!$content->meta->has('description')) {
+                $contentDesc = strip_tags($content->content);
+                $words = preg_split('/\s+/', $contentDesc);
+                $maxDescWords = config('seo_max_description') ?: 30;
+                if (count($words) > $maxDescWords) {
+                    $words = array_slice($words, 0, $maxDescWords);
+                    $contentDesc = implode(' ', $words) . '...';
+                }
+                $contentDesc = trim($contentDesc);
+                if (!empty($contentDesc)) {
+                    $content->meta->set('description', $contentDesc);
+                }
+            }
+
+            if (!$content->meta->has('thumbnail')) {
+                if (preg_match('/<img[^>]+src=(["\'])(.*?)\1/i', $content->content, $matches)) {
+                    $content->meta->set('thumbnail', $matches[2]);
+                }
+            }
         }
         $content->category = Category::fromSlug(getCategoryFromSlug($content->slug));
 
