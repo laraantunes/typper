@@ -43,8 +43,8 @@ class TypperParsedown extends ParsedownExtra
                             if (!is_dir($cacheDir)) {
                                 @mkdir($cacheDir, 0755, true);
                             }
-                            // Realpath now that it exists
-                            $cacheDir = realpath($cacheDir);
+                            // Realpath now that it exists, or fallback
+                            $cacheDir = realpath($cacheDir) ?: $cacheDir;
                             
                             $filename = basename($absolutePath);
                             $slug = basename(dirname($absolutePath));
@@ -58,9 +58,11 @@ class TypperParsedown extends ParsedownExtra
                                 $this->resizeImage($absolutePath, $cachePath, $width, $quality, $ext);
                             }
                             
-                            $newUrlBase = substr($path, 0, $pos);
-                            $image['element']['attributes']['src'] = $newUrlBase . '/cache/images/' . $cacheFilename;
-                            $image['element']['attributes']['width'] = $width;
+                            if (file_exists($cachePath)) {
+                                $newUrlBase = substr($path, 0, $pos);
+                                $image['element']['attributes']['src'] = $newUrlBase . '/cache/images/' . $cacheFilename;
+                                $image['element']['attributes']['width'] = $width;
+                            }
                         }
                     }
                 }
@@ -81,43 +83,18 @@ class TypperParsedown extends ParsedownExtra
         $targetHeight = (int) round(($origHeight / $origWidth) * $targetWidth);
         $imageResized = imagecreatetruecolor($targetWidth, $targetHeight);
         
-        $imageOrig = null;
-        switch ($ext) {
-            case 'jpg':
-            case 'jpeg':
-                $imageOrig = imagecreatefromjpeg($source);
-                break;
-            case 'png':
-                $imageOrig = imagecreatefrompng($source);
-                imagealphablending($imageResized, false);
-                imagesavealpha($imageResized, true);
-                $transparent = imagecolorallocatealpha($imageResized, 255, 255, 255, 127);
-                imagefilledrectangle($imageResized, 0, 0, $targetWidth, $targetHeight, $transparent);
-                break;
-            case 'webp':
-                if (function_exists('imagecreatefromwebp')) {
-                    $imageOrig = imagecreatefromwebp($source);
-                    imagealphablending($imageResized, false);
-                    imagesavealpha($imageResized, true);
-                    $transparent = imagecolorallocatealpha($imageResized, 255, 255, 255, 127);
-                    imagefilledrectangle($imageResized, 0, 0, $targetWidth, $targetHeight, $transparent);
-                }
-                break;
-            case 'gif':
-                $imageOrig = imagecreatefromgif($source);
-                $transparentIndex = imagecolortransparent($imageOrig);
-                if ($transparentIndex >= 0) {
-                    $transparentColor = imagecolorsforindex($imageOrig, $transparentIndex);
-                    $transparentIndex = imagecolorallocate($imageResized, $transparentColor['red'], $transparentColor['green'], $transparentColor['blue']);
-                    imagefill($imageResized, 0, 0, $transparentIndex);
-                    imagecolortransparent($imageResized, $transparentIndex);
-                }
-                break;
-        }
+        $imageOrig = @imagecreatefromstring(file_get_contents($source));
         
         if (!$imageOrig) {
             imagedestroy($imageResized);
             return;
+        }
+        
+        if ($ext === 'png' || $ext === 'webp' || $ext === 'gif') {
+            imagealphablending($imageResized, false);
+            imagesavealpha($imageResized, true);
+            $transparent = imagecolorallocatealpha($imageResized, 255, 255, 255, 127);
+            imagefilledrectangle($imageResized, 0, 0, $targetWidth, $targetHeight, $transparent);
         }
         
         imagecopyresampled($imageResized, $imageOrig, 0, 0, 0, 0, $targetWidth, $targetHeight, $origWidth, $origHeight);
