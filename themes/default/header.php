@@ -6,7 +6,7 @@
     <link rel="icon" href="<?= rtrim(dirname($_SERVER['SCRIPT_NAME']), '/') ?: '/' ?>/icon.svg" type="image/svg+xml">
     
     <!-- Helpers de SEO e Google Analytics -->
-    <?php auto_seo($content ?? null); ?>
+    <?php auto_seo($content ?? null, $category ?? null); ?>
     <?php ga_analytics(); ?>
 
     <!-- Code Syntax Highlight CSS -->

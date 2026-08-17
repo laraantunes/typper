@@ -77,8 +77,9 @@ function ga_analytics()
  * Outputs SEO meta tags based on site configuration and current content
  *
  * @param \Typper\Skeleton\ContentInterface|null $content
+ * @param \Typper\Skeleton\CategoryInterface|null $category
  */
-function auto_seo(?\Typper\Skeleton\ContentInterface $content = null)
+function auto_seo(?\Typper\Skeleton\ContentInterface $content = null, ?\Typper\Skeleton\CategoryInterface $category = null)
 {
     $siteTitle = config('siteTitle') ?: 'Typper';
     $appendTitle = config('seo_append_title');
@@ -88,6 +89,11 @@ function auto_seo(?\Typper\Skeleton\ContentInterface $content = null)
     $pageTitle = $siteTitle;
     if ($content && !empty($content->title)) {
         $pageTitle = $content->title;
+        if ($appendTitle) {
+            $pageTitle .= " $separator " . $siteTitle;
+        }
+    } elseif ($category && !empty($category->title)) {
+        $pageTitle = $category->title;
         if ($appendTitle) {
             $pageTitle .= " $separator " . $siteTitle;
         }
@@ -114,6 +120,8 @@ function auto_seo(?\Typper\Skeleton\ContentInterface $content = null)
         if (!empty($contentDesc)) {
             $description = trim($contentDesc);
         }
+    } elseif ($category && $autoDescription && !empty($category->description)) {
+        $description = trim($category->description);
     }
     
     if (!empty($description)) {
