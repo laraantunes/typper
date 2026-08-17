@@ -1,5 +1,12 @@
 <?php
 $current_page = basename($_SERVER['PHP_SELF']);
+if (!isset($base_url)) {
+    $script_path = dirname($_SERVER['SCRIPT_NAME']);
+    $base_url = dirname($script_path);
+    if ($base_url === '\\' || $base_url === '/') {
+        $base_url = '';
+    }
+}
 ?>
 <header class="header glass-panel">
     <div class="brand">
@@ -16,6 +23,13 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
     <div class="header-actions">
         <?php if ($current_page === 'index.php'): ?>
+            <a href="<?= $base_url ?>/" target="_blank" class="btn btn-secondary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                Visualizar Site
+            </a>
             <a href="editor.php" class="btn btn-primary">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 5v14M5 12h14"></path>

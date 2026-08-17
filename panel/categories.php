@@ -68,6 +68,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (file_exists($categories_file)) {
     $categories = Yaml::parseFile($categories_file) ?: [];
 }
+
+// URL base dinâmica
+$script_path = dirname($_SERVER['SCRIPT_NAME']);
+$base_url = dirname($script_path);
+if ($base_url === '\\' || $base_url === '/') {
+    $base_url = '';
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -143,6 +150,12 @@ if (file_exists($categories_file)) {
                             <?php endif; ?>
                             
                             <div class="content-actions" style="margin-top: auto;">
+                                <a href="<?= htmlspecialchars($base_url) ?>/<?= htmlspecialchars($slug) ?>" target="_blank" class="btn btn-secondary btn-icon" title="Visualizar" onclick="event.stopPropagation();">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                </a>
                                 <button type="button" class="btn btn-secondary btn-icon" title="Editar" onclick="event.stopPropagation(); editCategory('<?= htmlspecialchars($slug) ?>', '<?= htmlspecialchars($cat['title'], ENT_QUOTES) ?>', '<?= htmlspecialchars($cat['description'] ?? '', ENT_QUOTES) ?>')">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
