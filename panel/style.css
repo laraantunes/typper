@@ -349,7 +349,6 @@ a:hover {
 /* Toast UI Editor Customization for Dark Theme */
 .toastui-editor-defaultUI {
     border-radius: var(--radius-md) !important;
-    overflow: hidden;
     border: 1px solid var(--color-glass-border) !important;
 }
 
@@ -358,14 +357,6 @@ a:hover {
     --bg-color: rgba(0, 0, 0, 0.2);
 }
 
-/* Fix popup position bug in TUI Editor */
-.toastui-editor-popup,
-.toastui-editor-popup-color,
-.tui-colorpicker-container,
-.tui-colorpicker-popup,
-.tui-popup-wrapper {
-    position: fixed !important;
-}
 
 /* Loader */
 .loader-overlay {
