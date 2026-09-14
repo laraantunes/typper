@@ -1,5 +1,6 @@
 <?php
 // install.php - Setup first user for Typper Panel
+require_once __DIR__ . '/../about.php';
 
 $auth_file = __DIR__ . '/data/auth.enc';
 
@@ -48,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Typper - Instalação</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=<?= $version ?>">
     <link rel="icon" href="icon.svg" type="image/svg+xml">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f0c29">
