@@ -156,6 +156,8 @@ if ($base_url === '\\' || $base_url === '/') {
             align-items: center;
             justify-content: center;
             color: #b3b3cc;
+            margin: 0; /* o wrapper do item já aplica a margem dos outros botões */
+            vertical-align: top;
         }
         .toastui-editor-toolbar-icons.typper-embed-btn:hover { color: #ffffff; }
 
