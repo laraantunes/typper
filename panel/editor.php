@@ -511,55 +511,114 @@ if ($base_url === '\\' || $base_url === '/') {
             return `<iframe src="${safeSrc}" width="100%" height="450" frameborder="0" loading="lazy" style="max-width: 100%;"></iframe>`;
         }
 
-        // Última linha (1-based) do bloco que contém a linha informada:
-        // blocos de código (```/~~~), blocos $$...$$ ou parágrafo/lista/tabela
-        function endOfMarkdownBlock(lines, line) {
+        // Modo Markdown: se a linha (1-based) está dentro de um bloco de código
+        // (```/~~~) ou $$...$$, devolve a linha que fecha o bloco; senão, null
+        function closingLineOfMarkdownBlock(lines, line) {
             let open = null;
             for (let i = 0; i < lines.length; i++) {
                 const t = lines[i].trim();
                 if (!open) {
+                    if (i > line - 1) return null; // passou do cursor fora de bloco
                     if (/^\$\$\S/.test(t)) open = { close: (s) => s === '$$', start: i };
                     else if (/^(```|~~~)/.test(t)) { const f = t.slice(0, 3); open = { close: (s) => s.startsWith(f), start: i }; }
-                    if (open && i > line - 1) break; // bloco começa depois do cursor
                 } else if (open.close(t)) {
-                    if (line - 1 >= open.start && line - 1 <= i) return i + 1;
+                    if (i >= line - 1) return i + 1;
                     open = null;
                 }
             }
-            if (open && line - 1 >= open.start) return lines.length; // bloco sem fechamento
-
-            while (line < lines.length && lines[line - 1].trim() !== '' && lines[line].trim() !== '') line++;
-            return line;
+            return open ? lines.length : null; // bloco sem fechamento vai até o fim
         }
 
-        // Insere o bloco "$$embed" no fim do parágrafo onde está o cursor
+        // Insere o bloco "$$embed" na posição do cursor
         function insertEmbedBlock(html) {
             // Uma linha "$$" sozinha encerraria o bloco antes da hora
-            const body = html.replace(/^\s*\$\$\s*$/gm, '');
-            const block = '$$embed\n' + body + '\n$$';
+            const body = html.replace(/^\s*\$\$\s*$/gm, '').trim();
+            if (!body) return;
 
-            const wasWysiwyg = editor.isWysiwygMode();
-            let line = Infinity; // sem posição conhecida: vai para o fim do texto
-            try {
-                if (wasWysiwyg) {
-                    const [from, to] = editor.getSelection();
-                    line = editor.convertPosToMatchEditorMode(from, to, 'markdown')[1][0];
+            if (editor.isWysiwygMode()) {
+                // Insere o nó do bloco direto no documento, onde está o cursor
+                const view = editor.getCurrentModeEditor().view;
+                const { state } = view;
+                const node = state.schema.nodes.customBlock.create({ info: 'embed' }, state.schema.text(body));
+                const sel = state.selection;
+                const $pos = sel.$to;
+                const parent = $pos.parent;
+                const isEmptyParagraph = (n) => n && n.type.name === 'paragraph' && n.content.size === 0;
+                let tr = state.tr;
+                let at;
+
+                if (sel.node) {
+                    // Bloco selecionado: logo depois dele
+                    at = sel.to;
+                    tr.insert(at, node);
+                } else if ($pos.depth > 1) {
+                    // Lista, tabela ou citação: depois da estrutura inteira
+                    at = $pos.after(1);
+                    tr.insert(at, node);
+                } else if ($pos.depth === 0 || parent.type.spec.code || !parent.isTextblock) {
+                    at = $pos.depth === 0 ? sel.to : $pos.after();
+                    tr.insert(at, node);
+                } else if (parent.content.size === 0) {
+                    // Linha vazia: o bloco ocupa o lugar dela
+                    at = $pos.before();
+                    tr.replaceWith(at, $pos.after(), node);
+                } else if ($pos.parentOffset === 0) {
+                    at = $pos.before();
+                    tr.insert(at, node);
+                } else if ($pos.parentOffset === parent.content.size) {
+                    at = $pos.after();
+                    tr.insert(at, node);
                 } else {
-                    line = editor.getSelection()[1][0];
+                    // Meio da linha: divide a linha e coloca o bloco entre as partes
+                    tr.split($pos.pos);
+                    at = $pos.pos + 1;
+                    tr.insert(at, node);
                 }
-            } catch (e) { /* usa o fim do texto */ }
-            if (wasWysiwyg) editor.changeMode('markdown', true);
 
+                // No modo visual cada linha em branco é um parágrafo vazio; junto do
+                // bloco ela viraria uma linha em branco a mais no markdown
+                const nextNode = tr.doc.resolve(at + node.nodeSize).nodeAfter;
+                if (isEmptyParagraph(nextNode)) tr.delete(at + node.nodeSize, at + node.nodeSize + nextNode.nodeSize);
+                const prevNode = tr.doc.resolve(at).nodeBefore;
+                if (isEmptyParagraph(prevNode)) tr.delete(at - prevNode.nodeSize, at);
+
+                view.dispatch(tr.scrollIntoView());
+                return;
+            }
+
+            // Modo Markdown: monta o texto com o bloco na posição do cursor,
+            // com linhas em branco em volta (insertText do editor perde linhas vazias)
             const lines = editor.getMarkdown().split('\n');
+            let line = lines.length;
+            let ch = lines[line - 1].length + 1;
+            try {
+                [line, ch] = editor.getSelection()[1];
+            } catch (e) { /* sem cursor conhecido: fim do texto */ }
             line = Math.min(Math.max(line, 1), lines.length);
-            line = endOfMarkdownBlock(lines, line);
+
+            const closing = closingLineOfMarkdownBlock(lines, line);
+            if (closing) {
+                line = closing;
+                ch = lines[line - 1].length + 1;
+            }
+
             const lineText = lines[line - 1];
-            const endPos = [line, lineText.length + 1];
+            const before = lineText.slice(0, ch - 1);
+            const after = lineText.slice(ch - 1);
+            const prevLine = line > 1 ? lines[line - 2] : '';
+            const nextLine = line < lines.length ? lines[line] : '';
 
-            editor.setSelection(endPos, endPos);
-            editor.insertText((lineText.trim() ? '\n\n' : '\n') + block + '\n');
+            const result = lines.slice(0, line - 1);
+            if (before.trim()) result.push(before, '');
+            else if (prevLine.trim()) result.push('');
+            result.push('$$embed', ...body.split('\n'), '$$');
+            const closeLine = result.length;
+            if (after.trim()) result.push('', after);
+            else if (nextLine.trim()) result.push('');
+            result.push(...lines.slice(line));
 
-            if (wasWysiwyg) editor.changeMode('wysiwyg', true);
+            editor.setMarkdown(result.join('\n'), false);
+            try { editor.setSelection([closeLine, 3], [closeLine, 3]); } catch (e) { /* ignora */ }
         }
 
         document.getElementById('btn-embed-insert').addEventListener('click', () => {
@@ -587,8 +646,10 @@ if ($base_url === '\\' || $base_url === '/') {
             if (e.key === 'Escape' && embedModal.classList.contains('active')) closeEmbedModal();
         });
 
-        // Troca o marcador do bloco por um iframe isolado com o HTML incorporado.
-        // Sem allow-same-origin: o código colado não acessa a sessão do painel.
+        // Troca o marcador do bloco por um iframe com o HTML incorporado.
+        // allow-same-origin é necessário: sem origem própria, serviços como Instagram
+        // e Spotify recusam ser exibidos (frame-ancestors não aceita origem "null").
+        // O mesmo código já roda sem restrição na página pública, no mesmo domínio.
         const embedFrames = new Map();
         const fromBase64 = (s) => {
             try { return decodeURIComponent(escape(atob(s || ''))); } catch (e) { return ''; }
@@ -599,7 +660,7 @@ if ($base_url === '\\' || $base_url === '/') {
                 el.setAttribute('data-hydrated', '1');
                 const id = 'e' + Math.random().toString(36).slice(2);
                 const iframe = document.createElement('iframe');
-                iframe.setAttribute('sandbox', 'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-presentation');
+                iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation allow-forms');
                 iframe.setAttribute('loading', 'lazy');
                 iframe.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><base target="_blank">'
                     + '<style>html,body{margin:0;padding:0;}body{padding:4px;font-family:sans-serif;}iframe,img,video{max-width:100%;}</style></head><body>'
