@@ -13,6 +13,93 @@ use Typper\Skeleton\ContentParserInterface;
  */
 class TypperParsedown extends ParsedownExtra
 {
+    public function __construct()
+    {
+        parent::__construct();
+
+        // Blocos "$$tipo ... $$" do editor: embed (Incorporar Conteúdo) e vídeos
+        $this->BlockTypes['$'] = array_merge(['Embed'], $this->BlockTypes['$'] ?? []);
+    }
+
+    /**
+     * Players dos blocos de vídeo; o conteúdo do bloco (ID) vai no fim da URL.
+     * Mantenha em sincronia com videoPlugin() em panel/editor.php.
+     */
+    private const VIDEO_PLAYERS = [
+        'youtube'  => 'https://www.youtube.com/embed/',
+        'vimeo'    => 'https://player.vimeo.com/video/',
+        'youku'    => 'https://player.youku.com/embed/',
+        'bilibili' => 'https://player.bilibili.com/player.html?aid=',
+        'qq'       => 'https://v.qq.com/txp/iframe/player.html?vid=',
+    ];
+
+    /**
+     * Abre um bloco "$$embed" (HTML exibido como está) ou de vídeo
+     * ("$$youtube", "$$vimeo", "$$mp4"...). O bloco termina na linha "$$".
+     */
+    protected function blockEmbed($Line)
+    {
+        if (!preg_match('/^\$\$(\w+)\s*$/', $Line['text'], $matches)) {
+            return;
+        }
+
+        $type = strtolower($matches[1]);
+        if ($type !== 'embed' && $type !== 'mp4' && !isset(self::VIDEO_PLAYERS[$type])) {
+            return;
+        }
+
+        return [
+            'embedType' => $type,
+            'embedLines' => [],
+            'element' => [
+                'name' => 'div',
+                'attributes' => ['class' => $type === 'embed' ? 'typper-embed' : 'typper-embed typper-video'],
+                'rawHtml' => '',
+                'allowRawHtmlInSafeMode' => true,
+            ],
+        ];
+    }
+
+    protected function blockEmbedContinue($Line, $Block)
+    {
+        if (isset($Block['complete'])) {
+            return;
+        }
+
+        if (isset($Block['interrupted'])) {
+            for ($i = 0; $i < $Block['interrupted']; $i++) {
+                $Block['embedLines'][] = '';
+            }
+            unset($Block['interrupted']);
+        }
+
+        if (rtrim($Line['text']) === '$$') {
+            $Block['complete'] = true;
+            return $Block;
+        }
+
+        $Block['embedLines'][] = $Line['body'];
+
+        return $Block;
+    }
+
+    protected function blockEmbedComplete($Block)
+    {
+        $content = trim(implode("\n", $Block['embedLines']));
+        $type = $Block['embedType'];
+
+        if ($type !== 'embed') {
+            $source = htmlspecialchars($content, ENT_QUOTES, 'UTF-8');
+            $content = $type === 'mp4'
+                ? '<video width="640" controls src="' . $source . '" style="max-width: 100%;"></video>'
+                : '<iframe width="640" height="450" src="' . self::VIDEO_PLAYERS[$type] . $source . '" frameborder="0" allowfullscreen style="max-width: 100%;"></iframe>';
+        }
+
+        $Block['element']['rawHtml'] = "\n" . $content . "\n";
+
+        return $Block;
+    }
+
     protected function inlineImage($Excerpt)
     {
         $image = parent::inlineImage($Excerpt);

@@ -107,6 +107,83 @@ if ($base_url === '\\' || $base_url === '/') {
     <!-- Color Syntax CSS -->
     <link rel="stylesheet" href="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.min.css">
     <link rel="stylesheet" href="https://uicdn.toast.com/editor-plugin-color-syntax/latest/toastui-editor-plugin-color-syntax.min.css">
+
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--color-bg-light);
+            border: 1px solid var(--color-glass-border);
+            padding: 2rem;
+            border-radius: var(--radius-md);
+            width: 100%;
+            max-width: 640px;
+            max-height: calc(100vh - 2rem);
+            overflow-y: auto;
+        }
+        #embed-code {
+            font-family: Consolas, Monaco, 'Courier New', monospace;
+            font-size: 0.85rem;
+            resize: vertical;
+            min-height: 180px;
+        }
+        .embed-hint {
+            color: var(--color-text-muted);
+            font-size: 0.85rem;
+            margin: 0 0 1rem;
+        }
+        .embed-error {
+            display: none;
+            color: #ff6b81;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Botão "Incorporar Conteúdo" na barra do editor */
+        .toastui-editor-toolbar-icons.typper-embed-btn {
+            background-image: none !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #b3b3cc;
+        }
+        .toastui-editor-toolbar-icons.typper-embed-btn:hover { color: #ffffff; }
+
+        /* Pré-visualização do bloco $$embed dentro do editor */
+        .typper-embed-preview {
+            border: 1px dashed rgba(0, 242, 254, 0.4);
+            border-radius: 6px;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .typper-embed-preview-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: #00f2fe;
+            margin-bottom: 0.4rem;
+        }
+        .typper-embed-preview iframe {
+            display: block;
+            width: 100%;
+            min-height: 80px;
+            border: 0;
+            background: #ffffff;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
     <div class="loader-overlay" id="loader">
@@ -212,6 +289,23 @@ if ($base_url === '\\' || $base_url === '/') {
         </main>
     </div>
 
+    <!-- Modal: Incorporar Conteúdo -->
+    <div class="modal" id="modal-embed" role="dialog" aria-modal="true" aria-labelledby="modal-embed-title">
+        <div class="modal-content">
+            <h3 style="margin-top: 0; color: var(--color-cyan);" id="modal-embed-title">Incorporar Conteúdo</h3>
+            <p class="embed-hint">Cole o código de incorporação fornecido pelo serviço (iframe, script ou HTML). Também é possível colar um link do YouTube ou de qualquer página para exibi-la em um iframe.</p>
+            <div class="form-group">
+                <label class="form-label" for="embed-code">Código HTML</label>
+                <textarea class="form-control" id="embed-code" rows="8" spellcheck="false" placeholder="&lt;iframe src=&quot;https://...&quot;&gt;&lt;/iframe&gt;"></textarea>
+                <div class="embed-error" id="embed-error">Cole o código ou o link a ser incorporado.</div>
+            </div>
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" style="flex: 1;" id="btn-embed-cancel">Cancelar</button>
+                <button type="button" class="btn btn-primary" style="flex: 1;" id="btn-embed-insert">Incorporar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- TUI Editor JS -->
     <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
     
@@ -248,10 +342,29 @@ if ($base_url === '\\' || $base_url === '/') {
                 toHTMLRenderers: {
                     youtube: createVideoNode('https://www.youtube.com/embed/'),
                     vimeo: createVideoNode('https://player.vimeo.com/video/'),
-                    youku: createVideoNode('http://player.youku.com/embed/'),
-                    bilibili: createVideoNode('http://player.bilibili.com/player.html?aid='),
+                    youku: createVideoNode('https://player.youku.com/embed/'),
+                    bilibili: createVideoNode('https://player.bilibili.com/player.html?aid='),
                     qq: createVideoNode('https://v.qq.com/txp/iframe/player.html?vid='),
                     mp4: createVideoNode('', true)
+                }
+            };
+        }
+
+        // Bloco "$$embed ... $$": HTML incorporado. No editor vira um marcador
+        // que é trocado por um iframe isolado (sandbox) em hydrateEmbedPreviews().
+        function embedPlugin() {
+            // Base64 (UTF-8) para o código passar intacto pelo sanitizador do editor
+            const toBase64 = (s) => btoa(unescape(encodeURIComponent(s)));
+
+            return {
+                toHTMLRenderers: {
+                    embed(node) {
+                        return [
+                            { type: 'openTag', tagName: 'div', classNames: ['typper-embed-preview'], attributes: { 'data-embed': toBase64(node.literal || '') } },
+                            { type: 'html', content: '<div class="typper-embed-preview-label">Conteúdo incorporado</div>' },
+                            { type: 'closeTag', tagName: 'div' }
+                        ];
+                    }
                 }
             };
         }
@@ -275,7 +388,7 @@ if ($base_url === '\\' || $base_url === '/') {
             initialValue: initialMarkdown,
             theme: 'dark',
             language: 'pt-BR',
-            plugins: [[codeSyntaxHighlight, { highlighter: Prism }], colorSyntax, videoPlugin],
+            plugins: [[codeSyntaxHighlight, { highlighter: Prism }], colorSyntax, videoPlugin, embedPlugin],
             hooks: {
                 addImageBlobHook: async (blob, callback) => {
                     let slug = document.getElementById('slug').value.trim() || 'temp';
@@ -337,6 +450,180 @@ if ($base_url === '\\' || $base_url === '/') {
                 }
             }
         });
+
+        // ===== Incorporar Conteúdo =====
+        const embedModal = document.getElementById('modal-embed');
+        const embedCode = document.getElementById('embed-code');
+        const embedError = document.getElementById('embed-error');
+
+        (function addEmbedToolbarButton() {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'toastui-editor-toolbar-icons typper-embed-btn';
+            btn.setAttribute('aria-label', 'Incorporar Conteúdo');
+            btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.23 8.77c.24-.24.581-.353.917-.303.515.077.877.528 1.073 1.01a2.5 2.5 0 1 0 3.259-3.259c-.482-.196-.933-.558-1.01-1.073-.05-.336.062-.676.303-.917l1.525-1.525A2.402 2.402 0 0 1 12 1.998c.617 0 1.234.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02Z"/></svg>';
+            btn.addEventListener('click', openEmbedModal);
+
+            editor.insertToolbarItem({ groupIndex: 3, itemIndex: 3 }, {
+                name: 'embed',
+                tooltip: 'Incorporar Conteúdo',
+                el: btn
+            });
+        })();
+
+        function openEmbedModal() {
+            embedCode.value = '';
+            embedError.style.display = 'none';
+            embedModal.classList.add('active');
+            setTimeout(() => embedCode.focus(), 0);
+        }
+
+        function closeEmbedModal() {
+            embedModal.classList.remove('active');
+            editor.focus();
+        }
+
+        // Link solto vira iframe (YouTube vira o player)
+        function normalizeEmbedInput(raw) {
+            const value = raw.trim();
+            if (!/^https?:\/\/\S+$/i.test(value)) return value;
+
+            let src = value;
+            try {
+                const url = new URL(value);
+                const host = url.hostname.replace(/^www\.|^m\./, '');
+                let videoId = null;
+                if (host === 'youtu.be') {
+                    videoId = url.pathname.slice(1);
+                } else if (host === 'youtube.com') {
+                    if (url.pathname === '/watch') videoId = url.searchParams.get('v');
+                    else if (/^\/(shorts|embed|live)\//.test(url.pathname)) videoId = url.pathname.split('/')[2];
+                }
+                if (videoId) {
+                    src = 'https://www.youtube.com/embed/' + encodeURIComponent(videoId);
+                    return `<iframe width="640" height="360" src="${src}" title="YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="max-width: 100%;"></iframe>`;
+                }
+            } catch (e) { /* mantém o link como está */ }
+
+            const safeSrc = src.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+            return `<iframe src="${safeSrc}" width="100%" height="450" frameborder="0" loading="lazy" style="max-width: 100%;"></iframe>`;
+        }
+
+        // Última linha (1-based) do bloco que contém a linha informada:
+        // blocos de código (```/~~~), blocos $$...$$ ou parágrafo/lista/tabela
+        function endOfMarkdownBlock(lines, line) {
+            let open = null;
+            for (let i = 0; i < lines.length; i++) {
+                const t = lines[i].trim();
+                if (!open) {
+                    if (/^\$\$\S/.test(t)) open = { close: (s) => s === '$$', start: i };
+                    else if (/^(```|~~~)/.test(t)) { const f = t.slice(0, 3); open = { close: (s) => s.startsWith(f), start: i }; }
+                    if (open && i > line - 1) break; // bloco começa depois do cursor
+                } else if (open.close(t)) {
+                    if (line - 1 >= open.start && line - 1 <= i) return i + 1;
+                    open = null;
+                }
+            }
+            if (open && line - 1 >= open.start) return lines.length; // bloco sem fechamento
+
+            while (line < lines.length && lines[line - 1].trim() !== '' && lines[line].trim() !== '') line++;
+            return line;
+        }
+
+        // Insere o bloco "$$embed" no fim do parágrafo onde está o cursor
+        function insertEmbedBlock(html) {
+            // Uma linha "$$" sozinha encerraria o bloco antes da hora
+            const body = html.replace(/^\s*\$\$\s*$/gm, '');
+            const block = '$$embed\n' + body + '\n$$';
+
+            const wasWysiwyg = editor.isWysiwygMode();
+            let line = Infinity; // sem posição conhecida: vai para o fim do texto
+            try {
+                if (wasWysiwyg) {
+                    const [from, to] = editor.getSelection();
+                    line = editor.convertPosToMatchEditorMode(from, to, 'markdown')[1][0];
+                } else {
+                    line = editor.getSelection()[1][0];
+                }
+            } catch (e) { /* usa o fim do texto */ }
+            if (wasWysiwyg) editor.changeMode('markdown', true);
+
+            const lines = editor.getMarkdown().split('\n');
+            line = Math.min(Math.max(line, 1), lines.length);
+            line = endOfMarkdownBlock(lines, line);
+            const lineText = lines[line - 1];
+            const endPos = [line, lineText.length + 1];
+
+            editor.setSelection(endPos, endPos);
+            editor.insertText((lineText.trim() ? '\n\n' : '\n') + block + '\n');
+
+            if (wasWysiwyg) editor.changeMode('wysiwyg', true);
+        }
+
+        document.getElementById('btn-embed-insert').addEventListener('click', () => {
+            const html = normalizeEmbedInput(embedCode.value);
+            if (!html) {
+                embedError.style.display = 'block';
+                embedCode.focus();
+                return;
+            }
+            embedModal.classList.remove('active');
+            insertEmbedBlock(html);
+            editor.focus();
+        });
+
+        document.getElementById('btn-embed-cancel').addEventListener('click', closeEmbedModal);
+        embedModal.addEventListener('mousedown', (e) => { if (e.target === embedModal) closeEmbedModal(); });
+        embedCode.addEventListener('input', () => { embedError.style.display = 'none'; });
+        embedCode.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                document.getElementById('btn-embed-insert').click();
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && embedModal.classList.contains('active')) closeEmbedModal();
+        });
+
+        // Troca o marcador do bloco por um iframe isolado com o HTML incorporado.
+        // Sem allow-same-origin: o código colado não acessa a sessão do painel.
+        const embedFrames = new Map();
+        const fromBase64 = (s) => {
+            try { return decodeURIComponent(escape(atob(s || ''))); } catch (e) { return ''; }
+        };
+
+        function hydrateEmbedPreviews() {
+            document.querySelectorAll('#editor .typper-embed-preview[data-embed]:not([data-hydrated])').forEach((el) => {
+                el.setAttribute('data-hydrated', '1');
+                const id = 'e' + Math.random().toString(36).slice(2);
+                const iframe = document.createElement('iframe');
+                iframe.setAttribute('sandbox', 'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-presentation');
+                iframe.setAttribute('loading', 'lazy');
+                iframe.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><base target="_blank">'
+                    + '<style>html,body{margin:0;padding:0;}body{padding:4px;font-family:sans-serif;}iframe,img,video{max-width:100%;}</style></head><body>'
+                    + fromBase64(el.getAttribute('data-embed'))
+                    + '<script>(function(){var s=function(){parent.postMessage({typperEmbed:"' + id + '",height:document.documentElement.scrollHeight},"*");};'
+                    + 'window.addEventListener("load",s);if(window.ResizeObserver){new ResizeObserver(s).observe(document.body);}setTimeout(s,1500);s();})();<\/script>'
+                    + '</body></html>';
+                embedFrames.set(id, iframe);
+                el.appendChild(iframe);
+            });
+
+            // Limpa iframes que saíram do editor
+            embedFrames.forEach((iframe, id) => { if (!iframe.isConnected) embedFrames.delete(id); });
+        }
+
+        window.addEventListener('message', (e) => {
+            const data = e.data;
+            if (!data || typeof data.typperEmbed !== 'string') return;
+            const iframe = embedFrames.get(data.typperEmbed);
+            if (!iframe || e.source !== iframe.contentWindow) return;
+            const h = Math.min(Math.max(parseInt(data.height, 10) || 0, 80), 2000);
+            iframe.style.height = h + 'px';
+        });
+
+        new MutationObserver(hydrateEmbedPreviews).observe(document.getElementById('editor'), { childList: true, subtree: true });
+        hydrateEmbedPreviews();
 
         // Insert Image logic
         function insertImageToEditor(url, altText) {

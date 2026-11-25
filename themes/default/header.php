@@ -45,10 +45,26 @@
         nav a:hover {
             text-decoration: underline;
         }
-        img, video, iframe {
+        img, video {
             max-width: 100%;
             height: auto;
             border-radius: 8px;
+        }
+        iframe {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+        .typper-embed {
+            margin: 1.5rem 0;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        .typper-video {
+            text-align: center;
+        }
+        .typper-embed > * {
+            margin-left: auto;
+            margin-right: auto;
         }
         pre {
             background: #282c34;
