@@ -163,7 +163,7 @@ if ($base_url === '\\' || $base_url === '/') {
                                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                     </svg>
                                 </button>
-                                <form method="POST" style="display: inline;" onclick="event.stopPropagation();" onsubmit="return confirm('Tem certeza que deseja excluir esta categoria? Os arquivos contidos nela NÃO serão apagados, mas ficarão sem categoria registrada no sistema.');">
+                                <form method="POST" style="display: inline;" onclick="event.stopPropagation();" data-confirm="Tem certeza que deseja excluir esta categoria? Os arquivos contidos nela NÃO serão apagados, mas ficarão sem categoria registrada no sistema." data-confirm-title="Excluir categoria" data-confirm-label="Excluir">
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="slug" value="<?= htmlspecialchars($slug) ?>">
                                     <button type="submit" class="btn btn-danger btn-icon" title="Excluir">

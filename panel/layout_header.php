@@ -66,3 +66,68 @@ if (!isset($base_url)) {
         <?php endif; ?>
     </div>
 </header>
+
+<!-- Styled confirmation, used instead of the browser's confirm().
+     typperConfirm(message, onYes, { title, confirmLabel }); forms can use data-confirm="…" -->
+<div class="confirm-modal" id="typper-confirm" role="alertdialog" aria-modal="true" aria-labelledby="typper-confirm-title">
+    <div class="confirm-modal-content glass-panel">
+        <h3 id="typper-confirm-title">Confirmar</h3>
+        <p id="typper-confirm-message"></p>
+        <div class="confirm-modal-actions">
+            <button type="button" class="btn btn-secondary" id="typper-confirm-cancel">Cancelar</button>
+            <button type="button" class="btn btn-danger" id="typper-confirm-ok">Confirmar</button>
+        </div>
+    </div>
+</div>
+<script>
+    (function () {
+        const modal = document.getElementById('typper-confirm');
+        let pending = null;
+
+        function close(confirmed) {
+            modal.classList.remove('active');
+            const callbacks = pending;
+            pending = null;
+            if (!callbacks) return;
+            if (confirmed) callbacks.onYes();
+            else if (callbacks.onNo) callbacks.onNo();
+        }
+
+        window.typperConfirm = function (message, onYes, options = {}) {
+            document.getElementById('typper-confirm-title').textContent = options.title || 'Confirmar';
+            document.getElementById('typper-confirm-message').textContent = message;
+            const ok = document.getElementById('typper-confirm-ok');
+            ok.textContent = options.confirmLabel || 'Confirmar';
+            ok.className = 'btn ' + (options.danger === false ? 'btn-primary' : 'btn-danger');
+            modal.classList.toggle('is-neutral', options.danger === false);
+            pending = { onYes, onNo: options.onNo };
+            modal.classList.add('active');
+            document.getElementById('typper-confirm-ok').focus();
+        };
+
+        document.getElementById('typper-confirm-ok').addEventListener('click', () => close(true));
+        document.getElementById('typper-confirm-cancel').addEventListener('click', () => close(false));
+        modal.addEventListener('click', (e) => { if (e.target === modal) close(false); });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
+                e.stopImmediatePropagation();
+                close(false);
+            }
+        }, true);
+
+        // Promise version: if (!(await typperConfirmAsync('…'))) return;
+        window.typperConfirmAsync = (message, options = {}) => new Promise(resolve =>
+            typperConfirm(message, () => resolve(true), { ...options, onNo: () => resolve(false) }));
+
+        // <form data-confirm="…" data-confirm-title="…" data-confirm-label="…">
+        document.addEventListener('submit', (e) => {
+            const form = e.target;
+            if (!form.dataset || !form.dataset.confirm) return;
+            e.preventDefault();
+            typperConfirm(form.dataset.confirm, () => form.submit(), {
+                title: form.dataset.confirmTitle,
+                confirmLabel: form.dataset.confirmLabel,
+            });
+        });
+    })();
+</script>

@@ -697,7 +697,7 @@ if ($base_url === '\\' || $base_url === '/') {
 
         // Image delete logic
         async function deleteImage(imageName, cardId) {
-            if (!confirm('Tem certeza que deseja excluir esta imagem? Se ela estiver sendo usada no conteúdo, ficará quebrada.')) return;
+            if (!(await typperConfirmAsync('Tem certeza que deseja excluir esta imagem? Se ela estiver sendo usada no conteúdo, ficará quebrada.', { title: 'Excluir imagem', confirmLabel: 'Excluir' }))) return;
             
             let slug = document.getElementById('slug').value.trim();
             if (!slug) return;

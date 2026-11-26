@@ -67,7 +67,7 @@ if (empty($_SESSION['typper_logged_in'])) {
         const alertContainer = document.getElementById('alert-container');
 
         btnUpdate.addEventListener('click', async () => {
-            if (!confirm('Deseja iniciar a verificação e atualização do sistema?')) {
+            if (!(await typperConfirmAsync('Deseja iniciar a verificação e atualização do sistema?', { title: 'Atualizar sistema', confirmLabel: 'Atualizar', danger: false }))) {
                 return;
             }
 

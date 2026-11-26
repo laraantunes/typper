@@ -480,3 +480,52 @@ input:checked + .custom-slider:before {
         display: none !important; /* Em mobile, esconder os tooltips de hover costuma ser a melhor prática */
     }
 }
+
+/* Styled confirmation modal (layout_header.php) */
+.confirm-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.confirm-modal.active {
+    display: flex;
+}
+
+.confirm-modal-content {
+    background: var(--color-bg-light);
+    border: 1px solid var(--color-glass-border);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    width: 100%;
+    max-width: 420px;
+    box-sizing: border-box;
+}
+
+.confirm-modal-content h3 {
+    margin: 0 0 1rem;
+    color: #ff5555;
+}
+
+.confirm-modal.is-neutral .confirm-modal-content h3 {
+    color: var(--color-cyan);
+}
+
+.confirm-modal-content p {
+    margin: 0 0 1.5rem;
+    color: var(--color-text-main);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.confirm-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}

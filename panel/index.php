@@ -285,7 +285,7 @@ usort($files, function($a, $b) {
                                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                     </svg>
                                 </span>
-                                <form method="POST" style="display: inline;" onclick="event.stopPropagation();" onsubmit="return confirm('Tem certeza que deseja excluir este conteúdo?');">
+                                <form method="POST" style="display: inline;" onclick="event.stopPropagation();" data-confirm="Tem certeza que deseja excluir este conteúdo?" data-confirm-title="Excluir conteúdo" data-confirm-label="Excluir">
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="slug" value="<?= htmlspecialchars($file['slug']) ?>">
                                     <button type="submit" class="btn btn-danger btn-icon" title="Excluir">
